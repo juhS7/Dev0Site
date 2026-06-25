@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Lógica de Programação • Dev Academy</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<main class="lesson-main">
+<article id="da-content">
+
+<div class="callout objective">
+  <div class="title">🎯 Objetivo</div>
+  <p>Ao final desta aula você saberá ler, escrever e raciocinar sobre algoritmos básicos — variáveis, condicionais, loops, funções e recursão — em JavaScript. Esse é o vocabulário mínimo para todo o resto da Dev Academy.</p>
+</div>
+
+<h2 id="o-que-e">1. O que é um algoritmo?</h2>
+<p>Um <strong>algoritmo</strong> é uma sequência finita, não ambígua e executável de instruções que, dado um conjunto de entradas, produz uma saída. Toda receita de bolo, todo cálculo de imposto e todo ranking do Spotify é, no fundo, um algoritmo. A programação é a arte de descrever algoritmos de forma que uma máquina possa executar.</p>
+<p>Um bom algoritmo tem três propriedades: <strong>corretude</strong> (resolve o problema certo), <strong>eficiência</strong> (não desperdiça tempo/memória) e <strong>clareza</strong> (humanos conseguem ler depois). Ao longo do seu currículo de pleno, você vai trocar muitas vezes uma propriedade pelas outras — e isso é normal.</p>
+
+<h2 id="variaveis">2. Variáveis e tipos de dados</h2>
+<p>Uma variável é um <em>rótulo</em> que aponta para um valor armazenado em memória. Em JavaScript usamos <code>let</code> (variável que muda) e <code>const</code> (referência fixa). Esqueça <code>var</code> — ela tem escopo confuso e foi superada.</p>
+<pre><code class="language-javascript">const nome = "Maria";        // string
+let idade = 29;               // number
+const ativo = true;           // boolean
+const tags = ["js", "ts"];    // array
+const user = { nome, idade }; // object (shorthand)
+let nada = null;              // ausência intencional
+let indef;                    // undefined (sem valor)</code></pre>
+
+<div class="callout tip">
+  <div class="title">💡 Dica</div>
+  <p>Use <code>const</code> por padrão. Só troque para <code>let</code> quando precisar reatribuir o valor. Isso reduz bugs e deixa a intenção explícita para quem lê.</p>
+</div>
+
+<h2 id="condicionais">3. Condicionais</h2>
+<p>Decisões no código são feitas com <code>if</code>, <code>else if</code>, <code>else</code> e <code>switch</code>. O resultado de uma comparação é sempre um booleano.</p>
+<pre><code class="language-javascript">function classificarNota(nota) {
+  if (nota &gt;= 90) return "A";
+  else if (nota &gt;= 75) return "B";
+  else if (nota &gt;= 60) return "C";
+  else return "Reprovado";
+}
+
+// switch para enumerar casos discretos
+function diaDaSemana(n) {
+  switch (n) {
+    case 0: return "Domingo";
+    case 6: return "Sábado";
+    default: return "Dia útil";
+  }
+}</code></pre>
+
+<h2 id="loops">4. Loops</h2>
+<p>Loops repetem instruções enquanto uma condição for verdadeira. Os três principais:</p>
+<pre><code class="language-javascript">// for clássico — quando você sabe quantas iterações
+for (let i = 0; i &lt; 5; i++) {
+  console.log("rodada", i);
+}
+
+// while — quando depende de uma condição externa
+let saldo = 100;
+while (saldo &gt; 0) {
+  saldo -= 25;
+}
+
+// for...of — percorrer arrays e iteráveis
+for (const tag of ["js", "ts", "node"]) {
+  console.log(tag.toUpperCase());
+}</code></pre>
+
+<div class="callout warning">
+  <div class="title">⚠ Atenção</div>
+  <p>Loop infinito acidental é o erro nº1 do iniciante. Sempre garanta que a condição vai eventualmente se tornar falsa (atualize o contador, decremente o saldo, etc.).</p>
+</div>
+
+<h2 id="funcoes">5. Funções</h2>
+<p>Funções encapsulam um pedaço de lógica reaproveitável. Recebem <strong>parâmetros</strong> e devolvem um <strong>retorno</strong>. Bons nomes de função descrevem <em>o que</em> ela faz, não <em>como</em>.</p>
+<pre><code class="language-javascript">// declaração tradicional
+function somar(a, b) {
+  return a + b;
+}
+
+// arrow function — sintaxe moderna
+const dobrar = (x) =&gt; x * 2;
+
+// parâmetros default e rest
+function saudacao(nome = "anon", ...extras) {
+  return `Olá, ${nome}! ${extras.join(" ")}`;
+}
+
+console.log(somar(2, 3));            // 5
+console.log(dobrar(10));             // 20
+console.log(saudacao("Ana", "bem-vinda")); // "Olá, Ana! bem-vinda"</code></pre>
+
+<h2 id="recursao">6. Recursão básica</h2>
+<p>Uma função recursiva é aquela que <strong>chama a si mesma</strong> com uma entrada menor, até chegar a um <em>caso base</em>. É a forma mais elegante de resolver problemas que se dividem em subproblemas do mesmo tipo.</p>
+<pre><code class="language-javascript">function fatorial(n) {
+  if (n &lt;= 1) return 1;        // caso base
+  return n * fatorial(n - 1);  // passo recursivo
+}
+
+console.log(fatorial(5)); // 120</code></pre>
+
+<div class="callout tip">
+  <div class="title">💡 Dica</div>
+  <p>Todo problema recursivo pode ser escrito iterativamente, mas recursão fica mais natural em estruturas em árvore (sistema de arquivos, DOM, JSON aninhado). Use a ferramenta certa para cada caso.</p>
+</div>
+
+<h2 id="fechando">7. Fechando o ciclo</h2>
+<p>Você acabou de cobrir o vocabulário mínimo da programação: <em>dados</em> (variáveis e tipos), <em>fluxo</em> (condicionais e loops), <em>abstração</em> (funções) e <em>autoreferência</em> (recursão). Tudo que vem a seguir — frameworks, bancos, cloud — é construído com esses blocos.</p>
+
+</article>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="../../assets/app.js"></script>
+<script>
+DevAcademy.initLesson({
+  moduleId:'t1-m1',
+  toc:[
+    {id:'o-que-e',label:'O que é um algoritmo'},
+    {id:'variaveis',label:'Variáveis e tipos'},
+    {id:'condicionais',label:'Condicionais'},
+    {id:'loops',label:'Loops'},
+    {id:'funcoes',label:'Funções'},
+    {id:'recursao',label:'Recursão'}
+  ],
+  quiz:[
+    {q:'Qual a melhor declaração padrão para um valor que NÃO será reatribuído?',
+     opts:['var','let','const','function'],answer:2,
+     explain:'const indica intenção de não reatribuir e ajuda o leitor a entender o código.'},
+    {q:'O que é um "caso base" em recursão?',
+     opts:['A primeira chamada da função','A condição que para a recursão','O retorno final','O parâmetro inicial'],answer:1,
+     explain:'Sem caso base a função se chama infinitamente e estoura a pilha.'},
+    {q:'Qual loop é mais natural para percorrer um array sem precisar do índice?',
+     opts:['for clássico','for...of','while','do...while'],answer:1,
+     explain:'for...of itera diretamente sobre os valores de qualquer iterável.'},
+    {q:'O que classificarNota(75) retorna no exemplo da aula?',
+     opts:['"A"','"B"','"C"','"Reprovado"'],answer:1,
+     explain:'75 >= 75 cai no segundo if, retornando "B".'}
+  ]
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Dashboard • Dev Academy</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="container" style="padding-top:40px;padding-bottom:60px">
+  <h1>Seu painel de estudos</h1>
+  <p style="color:var(--text-muted)">Acompanhe progresso global, por trilha e retome de onde parou.</p>
+
+  <div class="stat-grid">
+    <div class="stat"><div class="label">Progresso global</div><div class="value" id="da-stat-pct">0%</div></div>
+    <div class="stat"><div class="label">Módulos concluídos</div><div class="value" id="da-stat-done">0</div></div>
+    <div class="stat"><div class="label">Módulos totais</div><div class="value" id="da-stat-total">0</div></div>
+    <div class="stat"><div class="label">Trilhas finalizadas</div><div class="value" id="da-stat-trilhas">0/6</div></div>
+  </div>
+
+  <div class="card" style="cursor:default;transform:none;margin-bottom:32px">
+    <h3 style="margin-bottom:12px">Progresso geral</h3>
+    <div class="progress"><span id="da-global-progress" style="width:0%"></span></div>
+    <div style="margin-top:18px" id="da-last"></div>
+  </div>
+
+  <h2 style="margin-top:32px">Trilhas</h2>
+  <div class="grid cols-2" id="da-trilhas-progress" style="margin-top:16px"></div>
+</main>
+<footer class="footer"><div class="container">Dev Academy</div></footer>
+<script src="assets/app.js"></script>
+<script>DevAcademy.initDashboard();</script>
+</body>
+</html>

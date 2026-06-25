@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Python para Engenheiros • Dev Academy</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<main class="lesson-main">
+<article id="da-content">
+
+<div class="callout objective">
+  <div class="title">🎯 Objetivo</div>
+  <p>Ler e escrever Python com fluência o suficiente para automatizar tarefas, consumir APIs, processar dados e subir uma API REST com FastAPI — o stack mais comum quando o trabalho mistura backend e IA.</p>
+</div>
+
+<h2 id="por-que">1. Por que Python no currículo de pleno?</h2>
+<p>Python é a língua franca de IA/ML, automação, scripts internos e ferramentas de dados. Mesmo um time 100% TypeScript no produto principal acaba escrevendo Python para pipelines de ETL, scripts de migração e protótipos de LLM. Saber ler Python e escrever bem o suficiente para entregar uma API é hoje uma competência mínima de pleno.</p>
+
+<h2 id="sintaxe">2. Sintaxe e tipos</h2>
+<p>Python usa <strong>indentação</strong> como sintaxe. Não há chaves. Cuidado com mistura de tabs e espaços (use 4 espaços, sempre).</p>
+<pre><code class="language-python">nome: str = "Ana"
+idade: int = 30
+ativo: bool = True
+tags: list[str] = ["py", "fastapi"]
+user: dict[str, object] = {"nome": nome, "idade": idade}
+
+if idade &gt;= 18 and ativo:
+    print(f"{nome} pode entrar")
+else:
+    print("bloqueado")</code></pre>
+
+<div class="callout tip">
+  <div class="title">💡 Dica</div>
+  <p>Type hints (<code>: str</code>, <code>: int</code>) são <em>opcionais em runtime</em>, mas mypy / Pyright usam para checar o código estaticamente. Em código profissional eles são esperados.</p>
+</div>
+
+<h2 id="funcoes">3. Funções, lambdas e list comprehensions</h2>
+<pre><code class="language-python">def somar(a: int, b: int = 0) -&gt; int:
+    return a + b
+
+dobrar = lambda x: x * 2
+
+# list comprehension — substitui map/filter
+numeros = [1, 2, 3, 4, 5]
+pares_dobrados = [n * 2 for n in numeros if n % 2 == 0]
+# [4, 8]
+
+# dict comprehension
+quadrados = {n: n*n for n in range(5)}
+# {0:0, 1:1, 2:4, 3:9, 4:16}</code></pre>
+
+<h2 id="oop">4. Classes e OOP</h2>
+<pre><code class="language-python">from dataclasses import dataclass
+
+@dataclass
+class User:
+    nome: str
+    idade: int
+    ativo: bool = True
+
+    def saudacao(self) -&gt; str:
+        return f"Olá, {self.nome}"
+
+u = User(nome="Bia", idade=25)
+print(u.saudacao())</code></pre>
+
+<p><code>@dataclass</code> elimina o boilerplate de <code>__init__</code>, <code>__repr__</code> e <code>__eq__</code>. Em código novo, prefira dataclasses ou Pydantic models a classes "cruas".</p>
+
+<h2 id="arquivos">5. Arquivos, JSON e pathlib</h2>
+<pre><code class="language-python">import json
+from pathlib import Path
+
+config_path = Path("config.json")
+config = json.loads(config_path.read_text(encoding="utf-8"))
+
+config["versao"] = "2.0"
+config_path.write_text(json.dumps(config, indent=2, ensure_ascii=False))</code></pre>
+
+<div class="callout warning">
+  <div class="title">⚠ Atenção</div>
+  <p>Esqueça <code>open()</code> + <code>os.path.join()</code> em código novo. <code>pathlib.Path</code> é orientado a objetos, multiplataforma e muito mais legível.</p>
+</div>
+
+<h2 id="libs">6. Bibliotecas essenciais</h2>
+<p><strong>requests</strong> para HTTP, <strong>python-dotenv</strong> para variáveis de ambiente, <strong>pydantic</strong> para validação. Instale com <code>pip install requests python-dotenv pydantic</code>.</p>
+<pre><code class="language-python">import os, requests
+from dotenv import load_dotenv
+
+load_dotenv()
+API_KEY = os.environ["OPENAI_API_KEY"]
+
+resp = requests.get(
+    "https://api.github.com/users/torvalds",
+    headers={"Accept": "application/vnd.github+json"},
+    timeout=10,
+)
+resp.raise_for_status()
+print(resp.json()["public_repos"])</code></pre>
+
+<h2 id="fastapi">7. Sua primeira API REST com FastAPI</h2>
+<p>FastAPI usa type hints + Pydantic para gerar validação, serialização e documentação Swagger automaticamente. É o framework mais usado em backends Python modernos.</p>
+<pre><code class="language-python">from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI(title="DevPulse API")
+
+class Metric(BaseModel):
+    name: str
+    value: float
+    tags: list[str] = []
+
+DB: dict[str, Metric] = {}
+
+@app.post("/metrics", status_code=201)
+def create(m: Metric) -&gt; Metric:
+    DB[m.name] = m
+    return m
+
+@app.get("/metrics/{name}")
+def get(name: str) -&gt; Metric:
+    if name not in DB:
+        raise HTTPException(404, "métrica não encontrada")
+    return DB[name]</code></pre>
+
+<pre><code class="language-bash">pip install fastapi uvicorn
+uvicorn app:app --reload
+# abra http://localhost:8000/docs</code></pre>
+
+<h2 id="recap">8. Recap</h2>
+<p>Você agora tem o suficiente de Python para escrever scripts confiáveis, consumir APIs externas e expor as suas próprias com FastAPI. Na trilha de IA esse stack volta — LangChain e a maior parte do ecossistema de LLMs vive em Python.</p>
+
+</article>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="../../assets/app.js"></script>
+<script>
+DevAcademy.initLesson({
+  moduleId:'t1-m4',
+  toc:[
+    {id:'por-que',label:'Por que Python'},
+    {id:'sintaxe',label:'Sintaxe e tipos'},
+    {id:'funcoes',label:'Funções e comprehensions'},
+    {id:'oop',label:'Classes e dataclasses'},
+    {id:'arquivos',label:'Arquivos e JSON'},
+    {id:'libs',label:'Bibliotecas essenciais'},
+    {id:'fastapi',label:'API com FastAPI'}
+  ],
+  quiz:[
+    {q:'Como Python delimita blocos de código?',
+     opts:['Chaves { }','Palavras-chave begin/end','Indentação','Ponto e vírgula'],answer:2,
+     explain:'Indentação (4 espaços por convenção) é parte da sintaxe.'},
+    {q:'O que @dataclass faz?',
+     opts:['Cria um decorator HTTP','Gera __init__/__repr__/__eq__ automaticamente','Valida tipos em runtime','Define uma rota'],answer:1,
+     explain:'Elimina o boilerplate de classes simples de dados.'},
+    {q:'Em FastAPI, o que define a validação automática do body?',
+     opts:['Um middleware','Um Pydantic BaseModel','Um decorator @validate','Nada, FastAPI não valida'],answer:1,
+     explain:'FastAPI usa Pydantic para validar e serializar entradas e saídas.'},
+    {q:'O equivalente Pythonic de map(double, filter(even, nums)) é:',
+     opts:['for + if + append','[n*2 for n in nums if n%2==0]','reduce','lambda'],answer:1,
+     explain:'List comprehension é o idioma preferido na comunidade Python.'}
+  ]
+});
+</script>
+</body>
+</html>

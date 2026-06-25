@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>TypeScript Zero ao Avançado • Dev Academy</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<main class="lesson-main">
+<article id="da-content">
+
+<div class="callout objective">
+  <div class="title">🎯 Objetivo</div>
+  <p>Sair do "JS com types opcionais" e entender o sistema de tipos do TypeScript — generics, union/intersection, type guards e utility types — no nível usado em times profissionais.</p>
+</div>
+
+<h2 id="por-que">1. Por que TypeScript?</h2>
+<p>TypeScript adiciona um <strong>sistema de tipos estático</strong> a JavaScript. Você escreve em <code>.ts</code>, o compilador checa os tipos, e o resultado é JS válido. Os ganhos práticos:</p>
+<ul>
+  <li>Erros pegos no editor antes de chegarem em produção.</li>
+  <li>Autocompletar inteligente em IDEs (basicamente uma documentação viva).</li>
+  <li>Refatorações grandes sem medo: renomear um campo quebra o build no lugar certo.</li>
+</ul>
+
+<h2 id="config">2. tsconfig.json — strict por padrão</h2>
+<pre><code class="language-json">{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "skipLibCheck": true
+  }
+}</code></pre>
+
+<div class="callout warning">
+  <div class="title">⚠ Atenção</div>
+  <p>Sem <code>"strict": true</code> você está escrevendo "JS com decoração". Strict habilita <code>strictNullChecks</code>, <code>noImplicitAny</code> e outras checagens que são onde o TS realmente paga as contas.</p>
+</div>
+
+<h2 id="basico">3. Tipos básicos</h2>
+<pre><code class="language-typescript">let nome: string = "Ana";
+let idade: number = 30;
+let ativo: boolean = true;
+let tags: string[] = ["js", "ts"];
+let par: [string, number] = ["x", 1];   // tupla
+let nada: null | undefined = null;
+let qualquer: unknown = JSON.parse("[]"); // melhor que any</code></pre>
+
+<h2 id="types-vs-interfaces">4. Types vs Interfaces</h2>
+<p>Use <code>interface</code> para a forma de objetos que podem ser estendidos (especialmente APIs públicas e classes). Use <code>type</code> para uniões, intersecções, tuplas e aliases de tipos primitivos. No dia-a-dia ambos funcionam — escolha um padrão por projeto e siga.</p>
+<pre><code class="language-typescript">interface User {
+  id: string;
+  nome: string;
+  email?: string; // opcional
+}
+
+type Status = "ativo" | "inativo" | "pendente"; // union
+
+type AdminUser = User &amp; { permissoes: string[] }; // intersection</code></pre>
+
+<h2 id="generics">5. Generics</h2>
+<p>Generics permitem escrever código reutilizável sem perder tipagem. Pense neles como "parâmetros" para tipos.</p>
+<pre><code class="language-typescript">function primeiro&lt;T&gt;(arr: T[]): T | undefined {
+  return arr[0];
+}
+
+const n = primeiro([1, 2, 3]);       // n: number | undefined
+const s = primeiro(["a", "b"]);      // s: string | undefined
+
+// Em estruturas reutilizáveis
+interface ApiResponse&lt;T&gt; {
+  data: T;
+  meta: { total: number };
+}
+
+type UsersResponse = ApiResponse&lt;User[]&gt;;</code></pre>
+
+<h2 id="guards">6. Union types e type guards</h2>
+<p>Quando uma variável pode ter mais de um tipo, você precisa <em>estreitar</em> antes de usar. O compilador entende vários padrões.</p>
+<pre><code class="language-typescript">function formata(v: string | number): string {
+  if (typeof v === "string") return v.trim();
+  return v.toFixed(2); // aqui v é number
+}
+
+type Cat = { tipo: "cat"; miados: number };
+type Dog = { tipo: "dog"; latidos: number };
+type Pet = Cat | Dog;
+
+function descrever(p: Pet) {
+  switch (p.tipo) {            // discriminated union
+    case "cat": return `gato com ${p.miados} miados`;
+    case "dog": return `cão com ${p.latidos} latidos`;
+  }
+}</code></pre>
+
+<div class="callout tip">
+  <div class="title">💡 Dica</div>
+  <p>Discriminated unions (cada variante tem um campo literal único) é o padrão mais poderoso e idiomático de TypeScript. Use sempre que possível em vez de classes/herança.</p>
+</div>
+
+<h2 id="utility">7. Utility types essenciais</h2>
+<pre><code class="language-typescript">interface User { id: string; nome: string; email: string; senha: string; }
+
+type UserPublic  = Omit&lt;User, "senha"&gt;;            // sem senha
+type UserPatch   = Partial&lt;User&gt;;                  // tudo opcional
+type UserCreate  = Pick&lt;User, "nome" | "email" | "senha"&gt;;
+type UserMap     = Record&lt;string, User&gt;;           // { [id]: User }
+type Required1   = Required&lt;UserPatch&gt;;            // tudo obrigatório</code></pre>
+
+<h2 id="decorators">8. Decorators (visão geral)</h2>
+<p>Decorators (estágio 3, agora estáveis em TS 5) anotam classes, métodos e campos. São muito usados em frameworks como NestJS, TypeORM e Angular para metadata. Em projetos novos sem framework, prefira composição de funções — é mais simples e mais testável.</p>
+
+<h2 id="real">9. TypeScript no mundo real</h2>
+<p>Em projetos profissionais você raramente vai escrever <code>any</code>. A combinação que funciona: <strong>strict mode</strong>, schemas runtime com <strong>Zod</strong> (para validar entradas externas), <em>discriminated unions</em> para máquinas de estado, e generics para libs internas. Quando o tipo ficar muito complicado, é um sinal de que a modelagem dos dados pode estar errada — refatore o modelo, não o tipo.</p>
+
+</article>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="../../assets/app.js"></script>
+<script>
+DevAcademy.initLesson({
+  moduleId:'t1-m3',
+  toc:[
+    {id:'por-que',label:'Por que TS'},
+    {id:'config',label:'tsconfig strict'},
+    {id:'basico',label:'Tipos básicos'},
+    {id:'types-vs-interfaces',label:'Types vs Interfaces'},
+    {id:'generics',label:'Generics'},
+    {id:'guards',label:'Unions e type guards'},
+    {id:'utility',label:'Utility types'},
+    {id:'real',label:'TS no mundo real'}
+  ],
+  quiz:[
+    {q:'Qual flag deve estar SEMPRE habilitada num tsconfig profissional?',
+     opts:['noEmit','strict','allowJs','removeComments'],answer:1,
+     explain:'strict ativa as checagens que tornam o TS realmente útil.'},
+    {q:'Qual utility type remove campos de um tipo?',
+     opts:['Pick','Omit','Partial','Record'],answer:1,
+     explain:'Omit<T,K> cria um tipo sem as chaves K.'},
+    {q:'O padrão idiomático para representar "uma de N variantes" em TS é:',
+     opts:['Herança de classes','any com checagem manual','Discriminated union','Enum'],answer:2,
+     explain:'Discriminated unions com campo literal único são o jeito mais seguro e ergonômico.'},
+    {q:'Como tornar todos os campos de User opcionais?',
+     opts:['Required<User>','Partial<User>','Pick<User,never>','Omit<User,never>'],answer:1,
+     explain:'Partial<T> torna todos os campos de T opcionais.'}
+  ]
+});
+</script>
+</body>
+</html>

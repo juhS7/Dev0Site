@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>SQL do Básico ao Avançado • Dev Academy</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<main class="lesson-main">
+<article id="da-content">
+
+<div class="callout objective">
+  <div class="title">🎯 Objetivo</div>
+  <p>Modelar dados relacionais, escrever consultas SQL profissionais (JOINs, subqueries, CTEs), entender índices e transações, e aproveitar recursos avançados específicos do PostgreSQL.</p>
+</div>
+
+<h2 id="modelagem">1. Modelagem relacional</h2>
+<p>Um banco relacional organiza dados em <strong>tabelas</strong> (relações) compostas por <strong>colunas</strong> (atributos) e <strong>linhas</strong> (registros). Cada tabela tem uma <strong>chave primária</strong> que identifica unicamente uma linha. <strong>Chaves estrangeiras</strong> ligam tabelas entre si — esse é o "relacional" do nome.</p>
+<p>Antes de escrever SQL, desenhe seu modelo: que entidades existem, quais campos cada uma tem, e como elas se relacionam (1:1, 1:N ou N:M). Para N:M você sempre precisa de uma tabela de junção (ex: <code>user_roles</code>).</p>
+
+<h2 id="ddl">2. DDL — criando estruturas</h2>
+<pre><code class="language-sql">CREATE TABLE users (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email      TEXT UNIQUE NOT NULL,
+  nome       TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE posts (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  titulo     TEXT NOT NULL,
+  conteudo   TEXT,
+  publicado  BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE posts ADD COLUMN views INT NOT NULL DEFAULT 0;</code></pre>
+
+<h2 id="dml">3. DML — manipulando dados</h2>
+<pre><code class="language-sql">INSERT INTO users (email, nome) VALUES ('ana@x.com', 'Ana');
+
+SELECT id, nome FROM users WHERE nome ILIKE 'a%' ORDER BY created_at DESC LIMIT 10;
+
+UPDATE posts SET publicado = true WHERE id = '...';
+
+DELETE FROM posts WHERE created_at &lt; now() - interval '1 year';</code></pre>
+
+<h2 id="joins">4. JOINs</h2>
+<p>JOINs combinam linhas de tabelas relacionadas. Os quatro principais:</p>
+<ul>
+  <li><strong>INNER JOIN</strong>: só linhas com match em ambos os lados.</li>
+  <li><strong>LEFT JOIN</strong>: todas as linhas da esquerda, NULL onde não há match.</li>
+  <li><strong>RIGHT JOIN</strong>: espelho do anterior.</li>
+  <li><strong>FULL JOIN</strong>: união de ambos, com NULL onde não há match.</li>
+</ul>
+<pre><code class="language-sql">-- Posts com nome do autor
+SELECT p.titulo, u.nome AS autor
+FROM posts p
+INNER JOIN users u ON u.id = p.user_id
+WHERE p.publicado = true
+ORDER BY p.created_at DESC;
+
+-- Usuários e contagem de posts (mesmo quem não tem post)
+SELECT u.nome, COUNT(p.id) AS total_posts
+FROM users u
+LEFT JOIN posts p ON p.user_id = u.id
+GROUP BY u.id, u.nome;</code></pre>
+
+<div class="callout tip">
+  <div class="title">💡 Dica</div>
+  <p>Quando ler <em>"para cada X, mesmo se não tiver Y"</em>, é LEFT JOIN. Esse padrão aparece em quase todo dashboard.</p>
+</div>
+
+<h2 id="subqueries">5. Subqueries e CTEs (WITH)</h2>
+<p>CTEs (Common Table Expressions) deixam queries complexas legíveis quebrando em etapas nomeadas.</p>
+<pre><code class="language-sql">WITH top_autores AS (
+  SELECT user_id, COUNT(*) AS total
+  FROM posts
+  WHERE publicado = true
+  GROUP BY user_id
+  HAVING COUNT(*) &gt; 10
+)
+SELECT u.nome, t.total
+FROM top_autores t
+JOIN users u ON u.id = t.user_id
+ORDER BY t.total DESC;</code></pre>
+
+<h2 id="indices">6. Índices e performance</h2>
+<p>Um índice é uma estrutura paralela (geralmente B-Tree) que acelera buscas em colunas específicas — em troca de espaço e de escrita um pouco mais lenta.</p>
+<pre><code class="language-sql">CREATE INDEX idx_posts_user_id   ON posts(user_id);
+CREATE INDEX idx_posts_created   ON posts(created_at DESC);
+CREATE INDEX idx_users_email     ON users(email);
+
+EXPLAIN ANALYZE
+SELECT * FROM posts WHERE user_id = '...' ORDER BY created_at DESC LIMIT 20;</code></pre>
+
+<div class="callout warning">
+  <div class="title">⚠ Atenção</div>
+  <p>Não saia criando índice em toda coluna. Cada índice custa espaço e tempo em INSERT/UPDATE. Crie depois de medir com <code>EXPLAIN ANALYZE</code> e só onde queries reais precisam.</p>
+</div>
+
+<h2 id="tx">7. Transações e ACID</h2>
+<p>Uma transação agrupa operações que devem ocorrer "tudo ou nada" (atomicidade). PostgreSQL respeita ACID por padrão.</p>
+<pre><code class="language-sql">BEGIN;
+UPDATE conta SET saldo = saldo - 100 WHERE id = 1;
+UPDATE conta SET saldo = saldo + 100 WHERE id = 2;
+-- se algo falhar:
+ROLLBACK;
+-- se tudo deu certo:
+COMMIT;</code></pre>
+
+<h2 id="postgres">8. PostgreSQL especificamente</h2>
+<p>Postgres tem recursos que você usaria todo dia em projetos sérios:</p>
+<ul>
+  <li><strong>JSONB</strong>: armazena JSON binário com índices GIN — bom para campos semi-estruturados.</li>
+  <li><strong>Arrays nativos</strong>: <code>tags TEXT[]</code> sem precisar de tabela auxiliar.</li>
+  <li><strong>UUID</strong> como chave primária via <code>gen_random_uuid()</code>.</li>
+  <li><strong>Full-text search</strong> embutido com <code>tsvector</code>/<code>tsquery</code>.</li>
+</ul>
+<pre><code class="language-sql">CREATE TABLE eventos (
+  id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tipo    TEXT NOT NULL,
+  payload JSONB NOT NULL,
+  tags    TEXT[] DEFAULT '{}',
+  ts      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_eventos_payload ON eventos USING GIN (payload);
+CREATE INDEX idx_eventos_tags    ON eventos USING GIN (tags);
+
+-- consultar dentro do JSONB
+SELECT * FROM eventos
+WHERE payload -&gt;&gt; 'user_id' = 'u_123'
+  AND 'erro' = ANY(tags);</code></pre>
+
+<h2 id="fechando">9. Fechando a trilha</h2>
+<p>SQL é uma daquelas habilidades que rendem juros compostos pela carreira inteira. Quem domina JOIN, CTE, índice e <code>EXPLAIN</code> resolve em minutos problemas que outras pessoas resolvem com horas de código de aplicação.</p>
+
+</article>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script src="../../assets/app.js"></script>
+<script>
+DevAcademy.initLesson({
+  moduleId:'t1-m5',
+  toc:[
+    {id:'modelagem',label:'Modelagem'},
+    {id:'ddl',label:'DDL'},
+    {id:'dml',label:'DML'},
+    {id:'joins',label:'JOINs'},
+    {id:'subqueries',label:'Subqueries / CTEs'},
+    {id:'indices',label:'Índices'},
+    {id:'tx',label:'Transações'},
+    {id:'postgres',label:'PostgreSQL avançado'}
+  ],
+  quiz:[
+    {q:'Qual JOIN traz "todos os usuários, mesmo sem posts"?',
+     opts:['INNER JOIN','LEFT JOIN','RIGHT JOIN','CROSS JOIN'],answer:1,
+     explain:'LEFT JOIN preserva todas as linhas da tabela da esquerda.'},
+    {q:'Para que serve uma CTE (WITH ...)?',
+     opts:['Criar tabela permanente','Nomear uma subquery e tornar a consulta legível','Indexar dados','Iniciar transação'],answer:1,
+     explain:'CTEs quebram queries grandes em etapas nomeadas.'},
+    {q:'Em Postgres, qual tipo de índice é melhor para consultar dentro de campos JSONB?',
+     opts:['B-Tree','Hash','GIN','BRIN'],answer:2,
+     explain:'GIN é o tipo recomendado para JSONB e arrays.'},
+    {q:'Qual comando garante atomicidade entre múltiplos UPDATEs?',
+     opts:['SAVEPOINT','BEGIN ... COMMIT','LOCK TABLE','SET TRANSACTION'],answer:1,
+     explain:'Uma transação delimitada por BEGIN/COMMIT garante tudo-ou-nada.'}
+  ]
+});
+</script>
+</body>
+</html>

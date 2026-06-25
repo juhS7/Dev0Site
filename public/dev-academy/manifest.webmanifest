@@ -1,0 +1,16 @@
+{
+  "name": "Dev Academy",
+  "short_name": "Dev Academy",
+  "description": "Escola virtual: do iniciante ao engenheiro de software pleno.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

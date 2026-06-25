@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>JavaScript Essencial • Dev Academy</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<main class="lesson-main">
+<article id="da-content">
+
+<div class="callout objective">
+  <div class="title">🎯 Objetivo</div>
+  <p>Dominar a parte do JavaScript moderno que aparece todos os dias no trabalho de um engenheiro pleno: escopo, tipos, coleções funcionais, async/await, módulos e tratamento de erros.</p>
+</div>
+
+<h2 id="contexto">1. JS em 2026: ainda relevante?</h2>
+<p>JavaScript continua sendo a linguagem mais usada do mundo segundo a Stack Overflow Survey, com TypeScript em segundo. O motivo é simples: é a única linguagem nativa do navegador e, via Node.js / Bun / Deno, virou também a linguagem mais comum em backends Web. Dominar JS é pré-requisito para tudo no frontend e para boa parte do backend moderno.</p>
+
+<h2 id="escopo">2. var, let, const e escopo</h2>
+<p><code>var</code> tem escopo de função e <em>hoisting</em> esquisito. <code>let</code> e <code>const</code> têm escopo de bloco, que é o que você espera. Use <code>const</code> por padrão.</p>
+<pre><code class="language-javascript">function exemplo() {
+  if (true) {
+    var a = 1;
+    let b = 2;
+    const c = 3;
+  }
+  console.log(a); // 1  (var "vaza" do bloco)
+  // console.log(b); // ReferenceError
+}</code></pre>
+
+<h2 id="tipos">3. Tipos e coerção</h2>
+<p>Primitivos: <code>string</code>, <code>number</code>, <code>boolean</code>, <code>null</code>, <code>undefined</code>, <code>bigint</code>, <code>symbol</code>. Tudo o resto é <code>object</code> (incluindo arrays e funções). Cuidado com coerção implícita: sempre prefira <code>===</code> a <code>==</code>.</p>
+<pre><code class="language-javascript">"5" == 5    // true  (coerção)
+"5" === 5   // false (estrito, recomendado)
+[] + []     // ""    (esquisitices)
+typeof null // "object"  (bug histórico)</code></pre>
+
+<h2 id="arrays">4. Arrays e métodos funcionais</h2>
+<p>Os três pilares funcionais que você vai usar diariamente são <code>map</code>, <code>filter</code> e <code>reduce</code>. Eles não mutam o array original — retornam um novo.</p>
+<pre><code class="language-javascript">const users = [
+  { nome: "Ana",  idade: 30, ativo: true  },
+  { nome: "Bia",  idade: 25, ativo: false },
+  { nome: "Caio", idade: 41, ativo: true  },
+];
+
+const nomesAtivos = users
+  .filter(u =&gt; u.ativo)
+  .map(u =&gt; u.nome);                 // ["Ana", "Caio"]
+
+const somaIdades = users
+  .reduce((acc, u) =&gt; acc + u.idade, 0); // 96
+
+const ana = users.find(u =&gt; u.nome === "Ana");</code></pre>
+
+<div class="callout tip">
+  <div class="title">💡 Dica</div>
+  <p><code>reduce</code> intimida no início. Lembre: ele percorre o array carregando um <em>acumulador</em>. Soma, agrupamento, transformação em objeto — tudo cabe em um reduce.</p>
+</div>
+
+<h2 id="objetos">5. Objetos, destructuring e spread</h2>
+<pre><code class="language-javascript">const user = { nome: "Ana", idade: 30, email: "ana@x.com" };
+
+// destructuring
+const { nome, ...resto } = user;       // nome="Ana", resto={idade,email}
+
+// spread para clonar/mesclar
+const atualizado = { ...user, idade: 31 };
+
+// arrays também
+const a = [1, 2, 3];
+const b = [0, ...a, 4]; // [0,1,2,3,4]</code></pre>
+
+<h2 id="async">6. Promises e async/await</h2>
+<p>Operações assíncronas (HTTP, leitura de arquivo, timer) retornam <code>Promise</code>. <code>async/await</code> deixa o código parecer síncrono.</p>
+<pre><code class="language-javascript">async function carregarUsuario(id) {
+  try {
+    const res = await fetch(`/api/users/${id}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const user = await res.json();
+    return user;
+  } catch (err) {
+    console.error("falha:", err);
+    return null;
+  }
+}
+
+// Paralelizar com Promise.all
+const [u1, u2] = await Promise.all([
+  carregarUsuario(1),
+  carregarUsuario(2),
+]);</code></pre>
+
+<div class="callout warning">
+  <div class="title">⚠ Atenção</div>
+  <p>Fazer <code>await</code> em sequência quando podia ser paralelo é um anti-padrão clássico: dobra o tempo de resposta. Quando os awaits são independentes, embrulhe em <code>Promise.all</code>.</p>
+</div>
+
+<h2 id="modulos">7. Módulos ES6</h2>
+<pre><code class="language-javascript">// math.js
+export function somar(a, b) { return a + b; }
+export const PI = 3.14159;
+export default class Calc { /* ... */ }
+
+// app.js
+import Calc, { somar, PI } from "./math.js";</code></pre>
+
+<h2 id="erros">8. Tratamento de erros</h2>
+<p>Erros em JS são objetos com <code>name</code>, <code>message</code> e <code>stack</code>. Em projetos sérios, defina classes de erro próprias para diferenciar erros de validação, de rede, de autorização, etc.</p>
+<pre><code class="language-javascript">class ValidationError extends Error {
+  constructor(field, msg) {
+    super(msg);
+    this.name = "ValidationError";
+    this.field = field;
+  }
+}
+
+function parseIdade(v) {
+  const n = Number(v);
+  if (Number.isNaN(n) || n &lt; 0) throw new ValidationError("idade", "inválida");
+  return n;
+}</code></pre>
+
+<h2 id="recap">9. Recap</h2>
+<p>JS moderno gira em torno de imutabilidade, funções de alta ordem, async/await e módulos. Quando você combina isso com TypeScript (próxima aula), ganha o melhor dos dois mundos: ergonomia funcional + segurança de tipos.</p>
+
+</article>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="../../assets/app.js"></script>
+<script>
+DevAcademy.initLesson({
+  moduleId:'t1-m2',
+  toc:[
+    {id:'contexto',label:'Por que JS'},
+    {id:'escopo',label:'Escopo'},
+    {id:'tipos',label:'Tipos e coerção'},
+    {id:'arrays',label:'Arrays funcionais'},
+    {id:'objetos',label:'Objetos, destructuring'},
+    {id:'async',label:'async/await'},
+    {id:'modulos',label:'Módulos'},
+    {id:'erros',label:'Erros'}
+  ],
+  quiz:[
+    {q:'Qual operador deve ser preferido para comparação?',
+     opts:['==','===','=','!='],answer:1,
+     explain:'=== compara valor E tipo, sem coerção implícita.'},
+    {q:'O que map, filter e reduce têm em comum?',
+     opts:['Mutam o array original','Retornam um novo array/valor sem mutar','Só funcionam com números','Só funcionam em servidores'],answer:1,
+     explain:'Todos retornam novos valores e preservam o array original (imutabilidade).'},
+    {q:'Como executar duas chamadas async independentes em paralelo?',
+     opts:['await uma, depois await a outra','Promise.all([a(), b()])','Promise.race','setTimeout'],answer:1,
+     explain:'Promise.all dispara as duas promises em paralelo e aguarda ambas.'},
+    {q:'Qual a saída de typeof null?',
+     opts:['"null"','"undefined"','"object"','"boolean"'],answer:2,
+     explain:'É um bug histórico de JS mantido por compatibilidade.'}
+  ]
+});
+</script>
+</body>
+</html>
